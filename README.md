@@ -43,11 +43,27 @@ A continuación, se muestran ejemplos de señales SPI capturadas con un analizad
 
 
 
-![Transferencias SPI a ambos esclavos](imagenes/spi_slave1.png)
+![Transferencias SPI a ambos esclavos](imgs/master-2dev.png)
 
 
 
-### 🖼️ Transferencia con el esclavo 2
+### 🖼️ Configuracion de dispositivos
+
+Configuracion del dispositivo 1:
+```c
+
+    spi_device_interface_config_t dev1_config ={
+        .clock_speed_hz = 50000,
+        .mode = 0,
+        .clock_source = SPI_CLK_SRC_DEFAULT, //
+        .spics_io_num = SPI_CS_DEV1,
+        .queue_size = 10,
+        .pre_cb = tr_pre,
+        .post_cb=tr_pos,
+        .flags = SPI_DEVICE_NO_DUMMY
+    };
+
+```
 
 Configuracion del dispositivo 2:
 ```c
@@ -67,42 +83,3 @@ Configuracion del dispositivo 2:
 ![Transferencia SPI con esclavo 2](imagenes/spi_slave2.png)
 
 ---
-
-## 💻 Código de ejemplo
-
-A continuación se muestra un fragmento de código para inicializar el SPI en modo master en el ESP32:
-
-```cpp
-#include <SPI.h>
-
-#define CS1 5
-#define CS2 17
-
-void setup() {
-  Serial.begin(115200);
-  
-  pinMode(CS1, OUTPUT);
-  pinMode(CS2, OUTPUT);
-  
-  digitalWrite(CS1, HIGH);
-  digitalWrite(CS2, HIGH);
-
-  SPI.begin(); // MOSI=23, MISO=19, SCLK=18 por defecto
-
-  // Transferencia al esclavo 1
-  digitalWrite(CS1, LOW);
-  SPI.transfer(0x42);
-  digitalWrite(CS1, HIGH);
-
-  delay(100);
-
-  // Transferencia al esclavo 2
-  digitalWrite(CS2, LOW);
-  SPI.transfer(0x55);
-  digitalWrite(CS2, HIGH);
-}
-
-void loop() {
-  // Nada en loop
-}
-``
