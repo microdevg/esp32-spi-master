@@ -80,6 +80,5 @@ Configuracion del dispositivo 2:
 ```
 
 
-![Transferencia SPI con esclavo 2](imagenes/spi_slave2.png)
 
 ---
