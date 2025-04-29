@@ -12,8 +12,8 @@
 #define SPI_HOST                                (SPI3_HOST)
 
 #define ST7735_CS_Pin                           (22)
-#define ST7735_DC_Pin                           (-1)
-#define ST7735_RES_Pin                          (-1)
+#define ST7735_DC_Pin                           (21)
+#define ST7735_RES_Pin                          (18)
 
 
 
