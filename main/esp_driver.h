@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "fonts.h"
 
 #define SPI_MISO                                (25)
 #define SPI_MOSI                                (23)
@@ -11,10 +12,18 @@
 #define SPI_HOST                                (SPI3_HOST)
 
 #define ST7735_CS_Pin                           (22)
-#define ST7735_DC_Pin                           ()
-#define ST7735_RES_Pin                          ()
+#define ST7735_DC_Pin                           (-1)
+#define ST7735_RES_Pin                          (-1)
 
 
+
+#define ST7735_MADCTL_MY  0x80
+#define ST7735_MADCTL_MX  0x40
+#define ST7735_MADCTL_MV  0x20
+#define ST7735_MADCTL_ML  0x10
+#define ST7735_MADCTL_RGB 0x00
+#define ST7735_MADCTL_BGR 0x08
+#define ST7735_MADCTL_MH  0x04
 
 
 // 1.44" display, default orientation
@@ -95,6 +104,7 @@ typedef enum {
 } GammaDef;
 
 // call before initializing any SPI devices
+void ST7735_Select();
 void ST7735_Unselect();
 
 void ST7735_Init(void);
