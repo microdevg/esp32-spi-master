@@ -7,11 +7,12 @@
 
 #define SPI_MISO                                (25)
 #define SPI_MOSI                                (23)
+#define ST7735_CS_Pin                           (22)
 #define SPI_SCK                                 (19)
 #define NOT_USE_PIN                             (-1)
-#define SPI_HOST                                (SPI3_HOST)
+#define SPI_ST7735                              (SPI3_HOST)
 
-#define ST7735_CS_Pin                           (22)
+
 #define ST7735_DC_Pin                           (21)
 #define ST7735_RES_Pin                          (18)
 
@@ -117,5 +118,8 @@ void ST7735_FillScreenFast(uint16_t color);
 void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data);
 void ST7735_InvertColors(bool invert);
 void ST7735_SetGamma(GammaDef gamma);
+
+
+void loop();
 
 #endif
