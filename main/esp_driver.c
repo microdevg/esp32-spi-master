@@ -4,10 +4,11 @@
 #include <freertos/task.h>
 #include <driver/spi_master.h>
 #include <string.h>
+#include "testimg.h"
 
 #define GPIO_PIN_RESET     0
 #define GPIO_PIN_SET       1
-
+#define MAX_BUFFER_SPI     128 * 128 * 2//4000
 
 #define DELAY 0x80
 
@@ -90,14 +91,6 @@ void HAL_Delay(uint32_t time){
 }
 
 
-void ST7735_Select() {
-  gpio_set_level(ST7735_CS_Pin,GPIO_PIN_RESET);
-  }
-
-void ST7735_Unselect() {
-  gpio_set_level(ST7735_CS_Pin,GPIO_PIN_SET);
-  }
-
   
 
 
@@ -130,7 +123,6 @@ static void ST7735_WriteData(uint8_t* buff, size_t buff_size) {
     .length = buff_size*8,
     .tx_buffer = buff
 };
- // spi_device_polling_transmit(DEV_ST7735,&tr);
  spi_device_transmit(DEV_ST7735,&tr);
 }
 
@@ -178,7 +170,6 @@ static void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t 
   ST7735_WriteCommand(ST7735_RAMWR);
 }
 
-
 void spi_init(){
   esp_err_t err  = ESP_OK;
   spi_bus_config_t bus_config = {
@@ -186,14 +177,14 @@ void spi_init(){
     .mosi_io_num   = SPI_MOSI,
     .sclk_io_num   = SPI_SCK,
     .quadwp_io_num = NOT_USE_PIN,
-    .quadhd_io_num = NOT_USE_PIN
+    .quadhd_io_num = NOT_USE_PIN,
+    .max_transfer_sz = MAX_BUFFER_SPI
 
 };
-    err = spi_bus_initialize(SPI_ST7735,&bus_config,SPI_DMA_DISABLED);
-
+    err = spi_bus_initialize(SPI_ST7735,&bus_config,SPI_DMA_CH_AUTO); //SPI_DMA_DISABLED);
     if(err != ESP_OK)printf("Error al iniciar el buffer \n");
     spi_device_interface_config_t dev1_config ={
-        .clock_speed_hz = 500000,
+        .clock_speed_hz = 20000000,
         .mode = 0,
         .clock_source = SPI_CLK_SRC_DEFAULT, //
         .spics_io_num = ST7735_CS_Pin,
@@ -202,46 +193,32 @@ void spi_init(){
         .post_cb=NULL,
         .flags = SPI_DEVICE_NO_DUMMY
     };
-
-
-    //Agrego el dispositivo
     printf("Agregar un nuevo dispositivo al bus spi\n");
     spi_bus_add_device(SPI_ST7735,&dev1_config,&DEV_ST7735);
 }
 
 void gpio_init(){
-  gpio_set_direction(ST7735_CS_Pin,GPIO_MODE_OUTPUT);
-
-
   gpio_set_direction(ST7735_DC_Pin,GPIO_MODE_OUTPUT);
   gpio_set_direction(ST7735_RES_Pin,GPIO_MODE_OUTPUT);
 }
 
 void ST7735_Init() {
-  // Inicializar el SPI
-  gpio_init();
 
+  gpio_init();
   spi_init();
-  ST7735_Select();
+  
   ST7735_Reset();
   ST7735_ExecuteCommandList(init_cmds1);
   ST7735_ExecuteCommandList(init_cmds2);
   ST7735_ExecuteCommandList(init_cmds3);
-  ST7735_Unselect();
 }
 
 
 void ST7735_DrawPixel(uint16_t x, uint16_t y, uint16_t color) {
-  if((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT))
-      return;
-
-  ST7735_Select();
-
+  if((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT)) return;
   ST7735_SetAddressWindow(x, y, x+1, y+1);
   uint8_t data[] = { color >> 8, color & 0xFF };
   ST7735_WriteData(data, sizeof(data));
-
-  ST7735_Unselect();
 }
 
 static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor) {
@@ -265,7 +242,7 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
 
 
 void ST7735_WriteString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor) {
-  ST7735_Select();
+  
 
   while(*str) {
       if(x + font.width >= ST7735_WIDTH) {
@@ -287,7 +264,6 @@ void ST7735_WriteString(uint16_t x, uint16_t y, const char* str, FontDef font, u
       str++;
   }
 
-  ST7735_Unselect();
 }
 
 
@@ -298,14 +274,13 @@ void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16
   if((x + w - 1) >= ST7735_WIDTH) w = ST7735_WIDTH - x;
   if((y + h - 1) >= ST7735_HEIGHT) h = ST7735_HEIGHT - y;
 
-  ST7735_Select();
+  
   ST7735_SetAddressWindow(x, y, x+w-1, y+h-1);
 
   uint8_t data[] = { color >> 8, color & 0xFF };
   gpio_set_level(ST7735_DC_Pin, GPIO_PIN_SET);
   for(y = h; y > 0; y--) {
       for(x = w; x > 0; x--) {
-          //HAL_SPI_Transmit(&ST7735_SPI_PORT, data, sizeof(data),HAL_MAX_DELAY);
           spi_transaction_t tr = {
             .flags  = 0x00,
             .length = sizeof(data)*8,
@@ -316,7 +291,6 @@ void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16
       }
   }
 
-  ST7735_Unselect();
 }
 
 void ST7735_FillRectangleFast(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
@@ -325,7 +299,7 @@ void ST7735_FillRectangleFast(uint16_t x, uint16_t y, uint16_t w, uint16_t h, ui
   if((x + w - 1) >= ST7735_WIDTH) w = ST7735_WIDTH - x;
   if((y + h - 1) >= ST7735_HEIGHT) h = ST7735_HEIGHT - y;
 
-  ST7735_Select();
+  
   ST7735_SetAddressWindow(x, y, x+w-1, y+h-1);
 
   // Prepare whole line in a single buffer
@@ -343,12 +317,10 @@ void ST7735_FillRectangleFast(uint16_t x, uint16_t y, uint16_t w, uint16_t h, ui
       .length = w * sizeof(pixel)*8,
       .tx_buffer = line
   };
-    //spi_device_polling_transmit(DEV_ST7735,&tr);
   spi_device_transmit(DEV_ST7735,&tr);
   }
  
   free(line);
-  ST7735_Unselect();
 }
 
 void ST7735_FillScreen(uint16_t color) {
@@ -360,28 +332,30 @@ void ST7735_FillScreenFast(uint16_t color) {
 }
 
 void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data) {
-  if((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT)) return;
-  if((x + w - 1) >= ST7735_WIDTH) return;
-  if((y + h - 1) >= ST7735_HEIGHT) return;
+  if ((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT)) return;
+  if ((x + w - 1) >= ST7735_WIDTH) return;
+  if ((y + h - 1) >= ST7735_HEIGHT) return;
 
-  ST7735_Select();
-  ST7735_SetAddressWindow(x, y, x+w-1, y+h-1);
-  ST7735_WriteData((uint8_t*)data, sizeof(uint16_t)*w*h);
-  ST7735_Unselect();
+  ST7735_SetAddressWindow(x, y, x + w - 1, y + h - 1);
+
+  int total_pixels = w * h;
+  int chunk_size_pixels = MAX_BUFFER_SPI / sizeof(uint16_t); 
+  for (int i = 0; i < total_pixels; i += chunk_size_pixels) {
+    int current_chunk = (total_pixels - i < chunk_size_pixels) ? (total_pixels - i) : chunk_size_pixels;
+    ST7735_WriteData((uint8_t*)&data[i], current_chunk * sizeof(uint16_t));
+  }
 }
 
 void ST7735_InvertColors(bool invert) {
-  ST7735_Select();
+  
   ST7735_WriteCommand(invert ? ST7735_INVON : ST7735_INVOFF);
-  ST7735_Unselect();
 }
 
 void ST7735_SetGamma(GammaDef gamma)
 {
-ST7735_Select();
+
 ST7735_WriteCommand(ST7735_GAMSET);
 ST7735_WriteData((uint8_t *) &gamma, sizeof(gamma));
-ST7735_Unselect();
 }
 
 void loop() {
@@ -406,47 +380,11 @@ void loop() {
   ST7735_WriteString(0, 3*10, "Font_11x18, green, lorem ipsum", Font_11x18, ST7735_GREEN, ST7735_BLACK);
   ST7735_WriteString(0, 3*10+3*18, "Font_16x26", Font_16x26, ST7735_BLUE, ST7735_BLACK);
   HAL_Delay(2000);
+  ST7735_DrawImage(0, 0, ST7735_WIDTH, ST7735_HEIGHT, (uint16_t*)  test_espressif_128x128);
+  HAL_Delay(5000);
 
-  // Check colors
-  ST7735_FillScreen(ST7735_BLACK);
-  ST7735_WriteString(0, 0, "BLACK", Font_11x18, ST7735_WHITE, ST7735_BLACK);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_BLUE);
-  ST7735_WriteString(0, 0, "BLUE", Font_11x18, ST7735_BLACK, ST7735_BLUE);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_RED);
-  ST7735_WriteString(0, 0, "RED", Font_11x18, ST7735_BLACK, ST7735_RED);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_GREEN);
-  ST7735_WriteString(0, 0, "GREEN", Font_11x18, ST7735_BLACK, ST7735_GREEN);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_CYAN);
-  ST7735_WriteString(0, 0, "CYAN", Font_11x18, ST7735_BLACK, ST7735_CYAN);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_MAGENTA);
-  ST7735_WriteString(0, 0, "MAGENTA", Font_11x18, ST7735_BLACK, ST7735_MAGENTA);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_YELLOW);
-  ST7735_WriteString(0, 0, "YELLOW", Font_11x18, ST7735_BLACK, ST7735_YELLOW);
-  HAL_Delay(500);
-
-  ST7735_FillScreen(ST7735_WHITE);
-  ST7735_WriteString(0, 0, "WHITE", Font_11x18, ST7735_BLACK, ST7735_WHITE);
-  HAL_Delay(500);
-
-#ifdef ST7735_IS_128X128
-  // Display test image 128x128
- // ST7735_DrawImage(0, 0, ST7735_WIDTH, ST7735_HEIGHT, (uint16_t*)test_img_128x128);
- // HAL_Delay(5000);
- // ST7735_DrawImage(0, 0, ST7735_WIDTH, ST7735_HEIGHT, (uint16_t*)  test_espressif_128x128);
-
-/*
+  HAL_Delay(5000);
+  printf("print an imagen pixel by pixel\n");
   // Display test image 128x128 pixel by pixel
   for(int x = 0; x < ST7735_WIDTH; x++) {
       for(int y = 0; y < ST7735_HEIGHT; y++) {
@@ -456,8 +394,6 @@ void loop() {
           ST7735_DrawPixel(x, y, color565);
       }
   }
-*/
-  HAL_Delay(15000);
-#endif // ST7735_IS_128X128
+
 
 }

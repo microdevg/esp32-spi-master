@@ -86,11 +86,11 @@ static const uint8_t
       100 };                  //     100 ms delay
 
 static void ST7735_Select() {
-    HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_RESET);
+   // HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_RESET);
 }
 
 void ST7735_Unselect() {
-    HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_SET);
+  //  HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_SET);
 }
 
 static void ST7735_Reset() {
