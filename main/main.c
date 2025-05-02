@@ -6,6 +6,8 @@
 #include "esp_driver.h"
 #include "gui_simple.h"
 
+#include "gui/ui.h"
+
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define BYTES_PER_PIXEL (LV_COLOR_FORMAT_GET_SIZE(LV_COLOR_FORMAT_RGB565)) 
 #define BUFF_SIZE (128 * 128 * BYTES_PER_PIXEL)
@@ -47,7 +49,10 @@ uint32_t getTime(){
     display1 = lv_display_create(128,128);
     lv_display_set_buffers(display1, buf_1, buf_2, BUFF_SIZE,LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_flush_cb(display1, my_flush_cb_with_DMA);
-    create_ui();
+    //create_ui();
+    
+    ui_init();
+
     printf("Init program \n");
     uint32_t time_till_next_ms = 0;
       while(1){ 
