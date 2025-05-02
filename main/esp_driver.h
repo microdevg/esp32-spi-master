@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "fonts.h"
+#include <driver/spi_common.h>
+#include <driver/spi_master.h>
 
 #define SPI_MISO                                (25)
 #define SPI_MOSI                                (23)

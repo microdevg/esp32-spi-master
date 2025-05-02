@@ -5,7 +5,8 @@
 #include <driver/spi_master.h>
 #include <string.h>
 #include "testimg.h"
-
+#include <unistd.h>
+#include <esp_task_wdt.h>
 #define GPIO_PIN_RESET     0
 #define GPIO_PIN_SET       1
 #define MAX_BUFFER_SPI     128 * 128 * 2//4000
@@ -87,7 +88,7 @@ spi_device_handle_t DEV_ST7735 = {0};
 
 
 void HAL_Delay(uint32_t time){
-  vTaskDelay(time/ portTICK_PERIOD_MS);        
+   vTaskDelay(time /portTICK_PERIOD_MS );        
 }
 
 
@@ -96,7 +97,7 @@ void HAL_Delay(uint32_t time){
 
 static void ST7735_Reset() {
   gpio_set_level(ST7735_RES_Pin, GPIO_PIN_RESET);
-  HAL_Delay(5/ portTICK_PERIOD_MS);        
+  HAL_Delay(5);        
   gpio_set_level(ST7735_RES_Pin, GPIO_PIN_SET);
 }
 
