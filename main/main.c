@@ -36,6 +36,10 @@ uint32_t getTime(){
 
 
 
+
+
+
+
   void display_task(void *pvParameter){
     ST7735_Init();
     void *buf_1 = spi_bus_dma_memory_alloc(SPI_ST7735, BUFF_SIZE, 0);
@@ -52,8 +56,7 @@ uint32_t getTime(){
     uint32_t time_till_next_ms = 0;
       while(1){ 
           time_till_next_ms = lv_timer_handler();
-          time_till_next_ms = MAX(time_till_next_ms, (1000 / CONFIG_FREERTOS_HZ));
-          vTaskDelay(time_till_next_ms/portTICK_PERIOD_MS);
+          vTaskDelay(100/portTICK_PERIOD_MS);
       }
   }
 
@@ -61,9 +64,15 @@ void app_main(void)
 {
   printf("init main\n");
   xTaskCreate(display_task, "display_task", 4096, NULL, 5, NULL);
+  vTaskDelay(2500/portTICK_PERIOD_MS);
+
+  char buffer[28]={0};
   int counter = 0;
     while(1){
       printf("counter:%d\n",counter++);
-      vTaskDelay(1000/portTICK_PERIOD_MS);
+      sprintf(buffer,"dev %d connected",counter);
+      if(counter < 20)add_notification(buffer);
+      
+      vTaskDelay(1500/portTICK_PERIOD_MS);
     }
 }

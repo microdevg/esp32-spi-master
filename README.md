@@ -144,11 +144,10 @@ Con la funcion flush que dibuja el display:
 ### Ejemplo en funcionamiento
 
 <p align="center">
-  <img src="./imgs/esp_lvgl.gif" alt="Demostración de LVGL en funcionamiento" width="300"/>
+  <img src="./imgs/notifications.gif" alt="Demostración de LVGL en funcionamiento" />
 </p>
+En el ejemplo, se observa cómo llegan notificaciones, que podrían ser mensajes recibidos desde un tópico MQTT; pasado un tiempo, estas se eliminan y las restantes se reacomodan en pantalla.
 
-El ejemplo que se muestra en pantalla está implementado en el archivo `gui_simple`.  
-Utiliza un dispositivo de entrada (*indev*), específicamente el botón `GPIO0` de la placa, para aumentar un contador.
 
 ---
 

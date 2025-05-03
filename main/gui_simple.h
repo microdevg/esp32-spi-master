@@ -3,4 +3,7 @@
 
 
 void create_ui();
+
+void add_notification(const char *message) ;
+
 #endif
